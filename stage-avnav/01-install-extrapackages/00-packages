@@ -17,3 +17,4 @@ mpg123
 ntp
 ntpdate
 rdate
+i2c-tools
