@@ -1,3 +1,3 @@
-deb https://www.free-x.de/debian buster main contrib non-free
-deb https://open-mind.space/repo/ buster-stable avnav
-#deb https://open-mind.space/repo/ buster-daily avnav
+deb https://www.free-x.de/debian RELEASE main contrib non-free
+#deb https://open-mind.space/repo/ RELEASE-stable avnav
+#deb https://open-mind.space/repo/ RELEASE-daily avnav
