@@ -9,6 +9,7 @@ python3-netifaces
 python3-pil
 python3-pigpio
 python3-smbus
+python3-dbus
 parted
 bc
 hostapd
