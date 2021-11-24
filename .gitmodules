@@ -1,3 +1,6 @@
 [submodule "stage-sk"]
 	path = stage-sk
 	url = https://github.com/free-x/stage-sk.git
+[submodule "stage-mcs"]
+	path = stage-mcs
+	url = https://github.com/free-x/stage-mcs.git
