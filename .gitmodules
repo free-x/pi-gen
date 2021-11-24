@@ -4,3 +4,6 @@
 [submodule "stage-mcs"]
 	path = stage-mcs
 	url = https://github.com/free-x/stage-mcs.git
+[submodule "stage-avnav"]
+	path = stage-avnav
+	url = https://github.com/free-x/stage-avnav.git
