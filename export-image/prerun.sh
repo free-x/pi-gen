@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+MSDOS_UUID="69BE1EFA"
+EXT4_UUID="89d4a841-d2a7-4dee-9225-8fbbeeee0797"
+
 if [ "${NO_PRERUN_QCOW2}" = "0" ]; then
 	IMG_FILE="${STAGE_WORK_DIR}/${IMG_FILENAME}${IMG_SUFFIX}.img"
 
@@ -75,8 +78,8 @@ if [ "${NO_PRERUN_QCOW2}" = "0" ]; then
 		ROOT_FEATURES="^$FEATURE,$ROOT_FEATURES"
 	fi
 	done
-	mkdosfs -n boot -F 32 -v "$BOOT_DEV" > /dev/null
-	mkfs.ext4 -L rootfs -O "$ROOT_FEATURES" "$ROOT_DEV" > /dev/null
+	mkdosfs -i "$MSDOS_UUID" -n boot -F 32 -v "$BOOT_DEV" > /dev/null
+	mkfs.ext4 -U "$EXT4_UUID" -L rootfs -O "$ROOT_FEATURES" "$ROOT_DEV" > /dev/null
 
 	mount -v "$ROOT_DEV" "${ROOTFS_DIR}" -t ext4
 	mkdir -p "${ROOTFS_DIR}/boot"
