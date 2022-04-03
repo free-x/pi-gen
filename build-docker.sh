@@ -86,6 +86,13 @@ case "$(uname -m)" in
 esac
 ${DOCKER} build --build-arg BASE_IMAGE=${BASE_IMAGE} -t pi-gen "${DIR}"
 
+CHECK_MOUNT_BINFMT_MISC=$(cat <<-END
+if [ -f /.dockerenv ] && (! grep -q "/proc/sys/fs/binfmt_misc" /proc/mounts); then
+  mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
+fi
+END
+)
+
 if [ "${CONTAINER_EXISTS}" != "" ]; then
 	trap 'echo "got CTRL+C... please wait 5s" && ${DOCKER} stop -t 5 ${CONTAINER_NAME}_cont' SIGINT SIGTERM
 	time ${DOCKER} run --rm --privileged \
@@ -97,7 +104,7 @@ if [ "${CONTAINER_EXISTS}" != "" ]; then
 		-e "GIT_HASH=${GIT_HASH}" \
 		--volumes-from="${CONTAINER_NAME}" --name "${CONTAINER_NAME}_cont" \
 		pi-gen \
-		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static &&
+		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static && $CHECK_MOUNT_BINFMT_MISC &&
 	cd /pi-gen; ./build.sh ${BUILD_OPTS} &&
 	rsync -av work/*/build.log deploy/" &
 	wait "$!"
@@ -111,7 +118,7 @@ else
 		--volume "${CONFIG_FILE}":/config:ro \
 		-e "GIT_HASH=${GIT_HASH}" \
 		pi-gen \
-		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static &&
+		bash -e -o pipefail -c "dpkg-reconfigure qemu-user-static && $CHECK_MOUNT_BINFMT_MISC &&
 	cd /pi-gen; ./build.sh ${BUILD_OPTS} &&
 	rsync -av work/*/build.log deploy/" &
 	wait "$!"
