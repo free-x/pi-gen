@@ -59,10 +59,8 @@ if [ "${NO_PRERUN_QCOW2}" = "0" ]; then
 		ROOT_FEATURES="^$FEATURE,$ROOT_FEATURES"
 	fi
 	done
-	mkdosfs -i "$MSDOS_UUID" -n boot -F 32 -s 4 -v "$BOOT_DEV" > /dev/null
+	mkdosfs -i "$MSDOS_UUID" -n bootfs -F 32 -s 4 -v "$BOOT_DEV" > /dev/null
 	mkfs.ext4 -U "$EXT4_UUID" -L rootfs -O "$ROOT_FEATURES" "$ROOT_DEV" > /dev/null
-	#mkdosfs -n boot -F 32 -s 4 -v "$BOOT_DEV" > /dev/null
-	#mkfs.ext4 -L rootfs -O "$ROOT_FEATURES" "$ROOT_DEV" > /dev/null
 
 	mount -v "$ROOT_DEV" "${ROOTFS_DIR}" -t ext4
 	mkdir -p "${ROOTFS_DIR}/boot"
