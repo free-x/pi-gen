@@ -1,6 +1,5 @@
 #!/bin/bash -e
 
-
 MSDOS_UUID="69BE1EFA"
 EXT4_UUID="89d4a841-d2a7-4dee-9225-8fbbeeee0797"
 
@@ -37,29 +36,49 @@ if [ "${NO_PRERUN_QCOW2}" = "0" ]; then
 	parted --script "${IMG_FILE}" unit B mkpart primary fat32 "${BOOT_PART_START}" "$((BOOT_PART_START + BOOT_PART_SIZE - 1))"
 	parted --script "${IMG_FILE}" unit B mkpart primary ext4 "${ROOT_PART_START}" "$((ROOT_PART_START + ROOT_PART_SIZE - 1))"
 
-	echo "Creating loop device..."
+	PARTED_OUT=$(parted -sm "${IMG_FILE}" unit b print)
+	BOOT_OFFSET=$(echo "$PARTED_OUT" | grep -e '^1:' | cut -d':' -f 2 | tr -d B)
+	BOOT_LENGTH=$(echo "$PARTED_OUT" | grep -e '^1:' | cut -d':' -f 4 | tr -d B)
+
+	ROOT_OFFSET=$(echo "$PARTED_OUT" | grep -e '^2:' | cut -d':' -f 2 | tr -d B)
+	ROOT_LENGTH=$(echo "$PARTED_OUT" | grep -e '^2:' | cut -d':' -f 4 | tr -d B)
+
+	echo "Mounting BOOT_DEV..."
 	cnt=0
-	until LOOP_DEV="$(losetup --show --find --partscan "$IMG_FILE")"; do
+	until BOOT_DEV=$(losetup --show -f -o "${BOOT_OFFSET}" --sizelimit "${BOOT_LENGTH}" "${IMG_FILE}"); do
 		if [ $cnt -lt 5 ]; then
 			cnt=$((cnt + 1))
-			echo "Error in losetup.  Retrying..."
+			echo "Error in losetup for BOOT_DEV.  Retrying..."
 			sleep 5
 		else
-			echo "ERROR: losetup failed; exiting"
+			echo "ERROR: losetup for BOOT_DEV failed; exiting"
 			exit 1
 		fi
 	done
 
-	BOOT_DEV="${LOOP_DEV}p1"
-	ROOT_DEV="${LOOP_DEV}p2"
+	echo "Mounting ROOT_DEV..."
+	cnt=0
+	until ROOT_DEV=$(losetup --show -f -o "${ROOT_OFFSET}" --sizelimit "${ROOT_LENGTH}" "${IMG_FILE}"); do
+		if [ $cnt -lt 5 ]; then
+			cnt=$((cnt + 1))
+			echo "Error in losetup for ROOT_DEV.  Retrying..."
+			sleep 5
+		else
+			echo "ERROR: losetup for ROOT_DEV failed; exiting"
+			exit 1
+		fi
+	done
+
+	echo "/boot: offset $BOOT_OFFSET, length $BOOT_LENGTH"
+	echo "/:     offset $ROOT_OFFSET, length $ROOT_LENGTH"
 
 	ROOT_FEATURES="^huge_file"
-	for FEATURE in 64bit; do
+	for FEATURE in metadata_csum 64bit; do
 	if grep -q "$FEATURE" /etc/mke2fs.conf; then
 		ROOT_FEATURES="^$FEATURE,$ROOT_FEATURES"
 	fi
 	done
-	mkdosfs -i "$MSDOS_UUID" -n bootfs -F 32 -s 4 -v "$BOOT_DEV" > /dev/null
+	mkdosfs -i "$MSDOS_UUID" -n boot -F 32 -v "$BOOT_DEV" > /dev/null
 	mkfs.ext4 -U "$EXT4_UUID" -L rootfs -O "$ROOT_FEATURES" "$ROOT_DEV" > /dev/null
 
 	mount -v "$ROOT_DEV" "${ROOTFS_DIR}" -t ext4
